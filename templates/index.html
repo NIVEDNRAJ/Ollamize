@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ollamize</title>
+  <style>
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: #f0f2ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      margin: 50px auto;
+      width: 80%;
+      max-width: 900px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      padding: 40px 50px;
+      transition: 0.3s;
+    }
+
+    .title {
+      text-align: center;
+      color: #012515;
+      font-weight: 700;
+      font-size: 48px;
+      font-family: "Showcard Gothic", cursive;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #555;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: #f5f3ff;
+      color: #012515;
+      padding: 12px 25px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 16px;
+    }
+
+    .tab-btn.active {
+      background: #012515;
+      color: white;
+      box-shadow: 0 4px 12px rgba(191, 197, 191, 0.1);
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      padding: 20px;
+      font-size: 16px;
+      resize: none;
+      margin-bottom: 20px;
+      transition: 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #012515;
+      box-shadow: 0 0 10px rgba(90,45,252,0.2);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .upload-label {
+      display: block;
+      text-align: center;
+      border: 2px dashed #bbb;
+      border-radius: 12px;
+      padding: 50px;
+      cursor: pointer;
+      color: #666;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    .upload-label.dragover {
+      background: #012515;
+      border-color: #012515;
+      color: #012515;
+    }
+
+    .upload-label span {
+      display: block;
+      margin-top: 12px;
+      color: #012515;
+      font-weight: 600;
+    }
+
+    .clear-btn {
+      display: block;
+      margin: 10px auto 0 auto;
+      background: #f1f1f1;
+      color: #555;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .clear-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 30px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    #summarizeBtn {
+      background: linear-gradient(135deg, #5c9163, #012515);
+      color: white;
+    }
+
+    #summarizeBtn:hover {
+      opacity: 0.9;
+    }
+
+    #resetBtn {
+      background: #f1f1f1;
+      color: #444;
+    }
+
+    #resetBtn:hover {
+      background: #e0e0e0;
+    }
+
+    pre {
+      background: #f6f6f6;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 30px;
+      white-space: pre-wrap;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      color: #333;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Ollamize</h1>
+    <p class="subtitle">AI-powered text summarization</p>
+
+    <div class="tab-buttons">
+      <button class="tab-btn active" id="textTab">Paste Text</button>
+      <button class="tab-btn" id="fileTab">Upload Files</button>
+    </div>
+
+    <form id="form">
+      <!-- Text Input -->
+      <div id="textInput">
+        <textarea name="text" placeholder="Paste your text here to summarize..."></textarea>
+      </div>
+
+      <!-- File Upload -->
+      <div id="fileInput" style="display:none;">
+        <label for="fileUpload" class="upload-label" id="dropArea">
+          Click or Drag & Drop your PDF file here
+          <span id="fileName"></span>
+        </label>
+        <input type="file" id="fileUpload" name="file" accept="application/pdf">
+        <button type="button" class="clear-btn" id="clearFileBtn">Clear File</button>
+      </div>
+
+      <!-- Buttons -->
+      <div class="buttons">
+        <button id="summarizeBtn" type="submit">Summarize</button>
+        <button id="resetBtn" type="reset">Reset</button>
+      </div>
+    </form>
+
+    <pre id="result"></pre>
+  </div>
+
+  <script>
+    const textTab = document.getElementById("textTab");
+    const fileTab = document.getElementById("fileTab");
+    const textInput = document.getElementById("textInput");
+    const fileInput = document.getElementById("fileInput");
+    const result = document.getElementById("result");
+    const form = document.getElementById("form");
+
+    const fileUpload = document.getElementById("fileUpload");
+    const fileName = document.getElementById("fileName");
+    const clearFileBtn = document.getElementById("clearFileBtn");
+    const dropArea = document.getElementById("dropArea");
+
+    // Tab switching
+    textTab.addEventListener("click", () => {
+      textTab.classList.add("active");
+      fileTab.classList.remove("active");
+      textInput.style.display = "block";
+      fileInput.style.display = "none";
+    });
+
+    fileTab.addEventListener("click", () => {
+      fileTab.classList.add("active");
+      textTab.classList.remove("active");
+      textInput.style.display = "none";
+      fileInput.style.display = "block";
+    });
+
+    // File selection display
+    fileUpload.addEventListener("change", () => {
+      if (fileUpload.files.length > 0) {
+        const file = fileUpload.files[0];
+        fileName.textContent = `Selected file: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+      } else {
+        fileName.textContent = "";
+      }
+    });
+
+    // Clear file
+    clearFileBtn.addEventListener("click", () => {
+      fileUpload.value = "";
+      fileName.textContent = "";
+    });
+
+    // Drag & Drop functionality
+    dropArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropArea.classList.add("dragover");
+    });
+
+    dropArea.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      dropArea.classList.remove("dragover");
+    });
+
+    dropArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropArea.classList.remove("dragover");
+      if (e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.type === "application/pdf") {
+          fileUpload.files = e.dataTransfer.files;
+          fileName.textContent = `Selected file: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+        } else {
+          alert("Please upload a PDF file.");
+        }
+      }
+    });
+
+    // Form submission
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      result.textContent = "Summarizing... (please wait)";
+      const fd = new FormData(form);
+      try {
+        const res = await fetch("/summarize", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Server Error");
+        const data = await res.json();
+        result.textContent = data.summary;
+      } catch (err) {
+        result.textContent = "Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
