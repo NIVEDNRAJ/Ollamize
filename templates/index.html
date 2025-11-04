@@ -1,33 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Ollamize</title>
+  <meta charset="UTF-8" />
+  <title>Ollamize — AI Summarizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: "Inter", Arial, sans-serif;
-      background: #f0f2ff;
+    /* ---------- Global Styles ---------- */
+    * {
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+      box-sizing: border-box;
     }
 
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: #f3f5fa;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- Navigation Bar ---------- */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: #012515;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-brand {
+      font-family: "Showcard Gothic", cursive;
+      font-size: 28px;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 30px;
+    }
+
+    .nav-links a {
+      color: #f1f1f1;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: #9cd4a3;
+    }
+
+    /* ---------- Main Container ---------- */
     .container {
       background: #fff;
-      margin: 50px auto;
       width: 80%;
       max-width: 900px;
       border-radius: 20px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
       padding: 40px 50px;
+      margin: 130px auto 60px;
       transition: 0.3s;
+      text-align: center;
     }
 
     .title {
-      text-align: center;
       color: #012515;
       font-weight: 700;
       font-size: 48px;
@@ -36,12 +81,12 @@
     }
 
     .subtitle {
-      text-align: center;
       color: #555;
       margin-bottom: 40px;
       font-size: 18px;
     }
 
+    /* ---------- Tabs ---------- */
     .tab-buttons {
       display: flex;
       justify-content: center;
@@ -64,7 +109,7 @@
     .tab-btn.active {
       background: #012515;
       color: white;
-      box-shadow: 0 4px 12px rgba(191, 197, 191, 0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     textarea {
@@ -102,7 +147,7 @@
     }
 
     .upload-label.dragover {
-      background: #012515;
+      background: #e8f0ea;
       border-color: #012515;
       color: #012515;
     }
@@ -116,7 +161,7 @@
 
     .clear-btn {
       display: block;
-      margin: 10px auto 0 auto;
+      margin: 10px auto 0;
       background: #f1f1f1;
       color: #555;
       border: none;
@@ -131,6 +176,7 @@
       background: #e0e0e0;
     }
 
+    /* ---------- Buttons ---------- */
     .buttons {
       display: flex;
       justify-content: center;
@@ -166,6 +212,7 @@
       background: #e0e0e0;
     }
 
+    /* ---------- Result Box ---------- */
     pre {
       background: #f6f6f6;
       padding: 20px;
@@ -176,26 +223,56 @@
       font-size: 16px;
       color: #333;
       min-height: 50px;
+      text-align: left;
+    }
+
+    /* ---------- Footer ---------- */
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: #012515;
+      color: #fff;
+      font-size: 14px;
+      margin-top: auto;
+    }
+
+    footer a {
+      color: #9cd4a3;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-brand">Ollamize</div>
+    <div class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container" id="home">
     <h1 class="title">Ollamize</h1>
-    <p class="subtitle">AI-powered text summarization</p>
+    <p class="subtitle">AI-powered summarization — Fast, Simple & Accurate</p>
 
     <div class="tab-buttons">
       <button class="tab-btn active" id="textTab">Paste Text</button>
-      <button class="tab-btn" id="fileTab">Upload Files</button>
+      <button class="tab-btn" id="fileTab">Upload PDF</button>
     </div>
 
     <form id="form">
-      <!-- Text Input -->
       <div id="textInput">
         <textarea name="text" placeholder="Paste your text here to summarize..."></textarea>
       </div>
 
-      <!-- File Upload -->
       <div id="fileInput" style="display:none;">
         <label for="fileUpload" class="upload-label" id="dropArea">
           Click or Drag & Drop your PDF file here
@@ -205,7 +282,6 @@
         <button type="button" class="clear-btn" id="clearFileBtn">Clear File</button>
       </div>
 
-      <!-- Buttons -->
       <div class="buttons">
         <button id="summarizeBtn" type="submit">Summarize</button>
         <button id="resetBtn" type="reset">Reset</button>
@@ -215,6 +291,11 @@
     <pre id="result"></pre>
   </div>
 
+  <footer>
+    &copy; 2025 Ollamize — Built with ❤️ using Flask & Ollama |
+    <a href="https://github.com/" target="_blank">GitHub</a>
+  </footer>
+
   <script>
     const textTab = document.getElementById("textTab");
     const fileTab = document.getElementById("fileTab");
@@ -222,13 +303,11 @@
     const fileInput = document.getElementById("fileInput");
     const result = document.getElementById("result");
     const form = document.getElementById("form");
-
     const fileUpload = document.getElementById("fileUpload");
     const fileName = document.getElementById("fileName");
     const clearFileBtn = document.getElementById("clearFileBtn");
     const dropArea = document.getElementById("dropArea");
 
-    // Tab switching
     textTab.addEventListener("click", () => {
       textTab.classList.add("active");
       fileTab.classList.remove("active");
@@ -243,57 +322,52 @@
       fileInput.style.display = "block";
     });
 
-    // File selection display
     fileUpload.addEventListener("change", () => {
       if (fileUpload.files.length > 0) {
         const file = fileUpload.files[0];
-        fileName.textContent = `Selected file: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+        fileName.textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
       } else {
         fileName.textContent = "";
       }
     });
 
-    // Clear file
     clearFileBtn.addEventListener("click", () => {
       fileUpload.value = "";
       fileName.textContent = "";
     });
 
-    // Drag & Drop functionality
-    dropArea.addEventListener("dragover", (e) => {
+    dropArea.addEventListener("dragover", e => {
       e.preventDefault();
       dropArea.classList.add("dragover");
     });
 
-    dropArea.addEventListener("dragleave", (e) => {
+    dropArea.addEventListener("dragleave", e => {
       e.preventDefault();
       dropArea.classList.remove("dragover");
     });
 
-    dropArea.addEventListener("drop", (e) => {
+    dropArea.addEventListener("drop", e => {
       e.preventDefault();
       dropArea.classList.remove("dragover");
       if (e.dataTransfer.files.length > 0) {
         const file = e.dataTransfer.files[0];
         if (file.type === "application/pdf") {
           fileUpload.files = e.dataTransfer.files;
-          fileName.textContent = `Selected file: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+          fileName.textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
         } else {
-          alert("Please upload a PDF file.");
+          alert("Please upload a valid PDF file.");
         }
       }
     });
 
-    // Form submission
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
-      result.textContent = "Summarizing... (please wait)";
+      result.textContent = "Summarizing... please wait ⏳";
       const fd = new FormData(form);
       try {
         const res = await fetch("/summarize", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Server Error");
         const data = await res.json();
-        result.textContent = data.summary;
+        result.textContent = data.summary || data.error;
       } catch (err) {
         result.textContent = "Error: " + err.message;
       }
