@@ -4,15 +4,19 @@ import io
 from PyPDF2 import PdfReader
 import math
 import json
-
+import docx2txt
+import os
 
 app = Flask(__name__)
 
+# Ollama configuration
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "qwen2.5"
 
-# --- Helpers ------------------------------------------------
+# --- Helper Functions ------------------------------------------------
+
 def extract_text_from_pdf(file_stream):
+    """Extract text from PDF using PyPDF2."""
     reader = PdfReader(file_stream)
     text = []
     for page in reader.pages:
@@ -21,8 +25,22 @@ def extract_text_from_pdf(file_stream):
             text.append(page_text)
     return "\n".join(text)
 
+def extract_text_from_docx(file_stream):
+    """Extract text from DOCX using docx2txt."""
+    temp_path = "temp_upload.docx"
+    with open(temp_path, "wb") as f:
+        f.write(file_stream.read())
+    text = docx2txt.process(temp_path)
+    os.remove(temp_path)
+    return text or ""
+
+def extract_text_from_txt(file_stream):
+    """Extract text from TXT files."""
+    file_stream.seek(0)
+    return file_stream.read().decode("utf-8", errors="ignore")
+
 def chunk_text(text, max_chars=3000):
-    """Split text into chunks of up to ~max_chars characters on sentence boundaries when possible."""
+    """Split text into chunks on sentence boundaries when possible."""
     text = text.replace("\r\n", " ").replace("\n", " ")
     if len(text) <= max_chars:
         return [text.strip()]
@@ -33,7 +51,6 @@ def chunk_text(text, max_chars=3000):
         if end >= len(text):
             chunks.append(text[start:].strip())
             break
-        # try find last period/semicolon before end to split nicely
         split_at = text.rfind('.', start, end)
         if split_at == -1:
             split_at = text.rfind(';', start, end)
@@ -45,10 +62,8 @@ def chunk_text(text, max_chars=3000):
     return chunks
 
 def call_ollama(prompt, model=MODEL_NAME):
-    payload = {
-        "model": model,
-        "prompt": prompt
-    }
+    """Send prompt to Ollama API and stream full response."""
+    payload = {"model": model, "prompt": prompt}
     with requests.post(OLLAMA_API_URL, json=payload, stream=True) as res:
         res.raise_for_status()
         full_output = ""
@@ -58,7 +73,6 @@ def call_ollama(prompt, model=MODEL_NAME):
             try:
                 data = line.decode("utf-8")
                 j = json.loads(data)
-                # Each chunk has "response"
                 if "response" in j:
                     full_output += j["response"]
             except Exception as e:
@@ -66,13 +80,10 @@ def call_ollama(prompt, model=MODEL_NAME):
         return full_output.strip()
 
 def summarize_long_text_iterative(text):
-    """
-    1) Split into chunks
-    2) Summarize each chunk
-    3) Combine chunk summaries and summarize again (final concise summary)
-    """
+    """Split text into chunks → summarize each → merge summaries."""
     chunks = chunk_text(text, max_chars=3000)
     chunk_summaries = []
+
     for i, ch in enumerate(chunks, start=1):
         prompt = (
             f"Summarize the following text concisely (one paragraph) keeping key points and facts. "
@@ -84,43 +95,55 @@ def summarize_long_text_iterative(text):
             summary = f"[ERROR: {e}]"
         chunk_summaries.append(summary.strip())
 
-    # if only one chunk, return its summary
+    # Single chunk → direct summary
     if len(chunk_summaries) == 1:
         return chunk_summaries[0]
 
-    # combine chunk summaries & make final summary
+    # Combine summaries → create final concise version
     combined = "\n".join(f"Chunk {i+1}: {s}" for i, s in enumerate(chunk_summaries))
     final_prompt = (
         "You are an expert summarizer. Given the following chunk summaries, produce a single concise "
-        "and coherent summary in 3-6 sentences containing the most important points.\n\n"
+        "and coherent summary in 3–6 sentences containing the most important points.\n\n"
         f"{combined}\n\nFinal summary:"
     )
     final_summary = call_ollama(final_prompt)
     return final_summary.strip()
 
-# --- Routes -----------------------------------------------
+# --- Flask Routes ----------------------------------------------------
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/summarize', methods=['POST'])
 def summarize():
-    # Accept text field OR file upload (pdf)
+    """Handle text or file upload and return summary."""
     raw_text = request.form.get('text', '').strip()
     uploaded_file = request.files.get('file')
 
-    if uploaded_file and uploaded_file.filename.lower().endswith('.pdf'):
-        # read pdf bytes
+    if uploaded_file:
+        filename = uploaded_file.filename.lower()
         file_stream = io.BytesIO(uploaded_file.read())
-        text = extract_text_from_pdf(file_stream)
-        if not text:
-            return jsonify({'error': 'Could not extract text from PDF'}), 400
+
+        if filename.endswith('.pdf'):
+            text = extract_text_from_pdf(file_stream)
+        elif filename.endswith('.docx'):
+            text = extract_text_from_docx(file_stream)
+        elif filename.endswith('.txt'):
+            text = extract_text_from_txt(file_stream)
+        else:
+            return jsonify({'error': 'Unsupported file type. Allowed: .pdf, .docx, .txt'}), 400
+
+        if not text.strip():
+            return jsonify({'error': 'Could not extract text from file'}), 400
+
     elif raw_text:
         text = raw_text
-    else:
-        return jsonify({'error': 'No text or PDF provided'}), 400
 
-    # Do iterative chunk summarization
+    else:
+        return jsonify({'error': 'No text or file provided'}), 400
+
+    # Summarization
     try:
         summary = summarize_long_text_iterative(text)
     except requests.exceptions.RequestException as e:
@@ -129,6 +152,8 @@ def summarize():
         return jsonify({'error': 'Error during summarization', 'details': str(e)}), 500
 
     return jsonify({'summary': summary})
+
+# --- Main ------------------------------------------------------------
 
 if __name__ == '__main__':
     app.run(debug=True)
