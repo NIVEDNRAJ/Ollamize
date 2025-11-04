@@ -265,7 +265,7 @@
 
     <div class="tab-buttons">
       <button class="tab-btn active" id="textTab">Paste Text</button>
-      <button class="tab-btn" id="fileTab">Upload PDF</button>
+      <button class="tab-btn" id="fileTab">Upload File</button>
     </div>
 
     <form id="form">
@@ -275,10 +275,10 @@
 
       <div id="fileInput" style="display:none;">
         <label for="fileUpload" class="upload-label" id="dropArea">
-          Click or Drag & Drop your PDF file here
+          Click or Drag & Drop your file here
           <span id="fileName"></span>
         </label>
-        <input type="file" id="fileUpload" name="file" accept="application/pdf">
+        <input type="file" id="fileUpload" name="file" accept=".pdf,.docx,.txt">
         <button type="button" class="clear-btn" id="clearFileBtn">Clear File</button>
       </div>
 
@@ -308,6 +308,7 @@
     const clearFileBtn = document.getElementById("clearFileBtn");
     const dropArea = document.getElementById("dropArea");
 
+    // Tab switch
     textTab.addEventListener("click", () => {
       textTab.classList.add("active");
       fileTab.classList.remove("active");
@@ -322,6 +323,7 @@
       fileInput.style.display = "block";
     });
 
+    // File handling
     fileUpload.addEventListener("change", () => {
       if (fileUpload.files.length > 0) {
         const file = fileUpload.files[0];
@@ -351,15 +353,17 @@
       dropArea.classList.remove("dragover");
       if (e.dataTransfer.files.length > 0) {
         const file = e.dataTransfer.files[0];
-        if (file.type === "application/pdf") {
+        const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
+        if (validTypes.includes(file.type) || file.name.endsWith(".docx") || file.name.endsWith(".txt")) {
           fileUpload.files = e.dataTransfer.files;
           fileName.textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
         } else {
-          alert("Please upload a valid PDF file.");
+          alert("Please upload a valid file (.pdf, .docx, .txt).");
         }
       }
     });
 
+    // Handle form submit
     form.addEventListener("submit", async e => {
       e.preventDefault();
       result.textContent = "Summarizing... please wait ⏳";
